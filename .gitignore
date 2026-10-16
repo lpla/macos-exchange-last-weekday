@@ -1,0 +1,16 @@
+# Local builds and runtime artifacts
+build/
+*.dylib
+*.dSYM/
+.DS_Store
+__pycache__/
+*.py[cod]
+*.log
+*.ips
+*.sample.txt
+*.tar
+*.tar.gz
+*.zip
+*.plist
+*.ics
+.env
