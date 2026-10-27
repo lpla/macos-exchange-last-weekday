@@ -43,7 +43,7 @@ Following a reboot, a fresh process loaded the candidate and the fallback worker
 
 A logging pitfall was observed during monitor activation: `os_log_info` records previously visible for a live process were later unavailable even though its PID had not changed and the recurrence had been functionally verified. Therefore, the absence of retained installation logs must be treated as **unconfirmed**, not as a proof that hooks were removed. The local installer had also rejected a protected journal file because its unprivileged check could not traverse a root-owned `0700` directory. Both issues are in deployment verification, not the recurrence conversion itself.
 
-These deployment scripts and binaries are **not published**. The checked-in Objective-C source remains gated to `25G241`; the later-build validation does not establish drop-in compatibility of that repository snapshot.
+These deployment scripts and binaries are **not published**. The Objective-C source matches the `25G332` validated candidate sources byte-for-byte. On this proposed branch, `tools/build.sh` provides an explicit compile-time gate for `25G241` and `25G332`, but there is still no publicly vetted installation mechanism. Future builds remain rejected.
 
 
 `src/Autoload.m` attempts installation in the constructor, after relevant `dlopen` returns, and via a fallback worker. This improves late class-registration handling but does not guarantee no callback runs before the hooks are installed.
