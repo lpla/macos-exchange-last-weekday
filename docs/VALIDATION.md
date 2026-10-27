@@ -22,14 +22,14 @@
 - Two **local deployment-script** defects were found, separate from the Objective-C recurrence patch: (1) a root-owned journal under a `0700` directory was incorrectly inspected using a non-privileged file test, causing a false missing-file error; the local verification function was corrected to use privileged metadata checks. (2) the watch installer treated the absence of an `os_log_info` message in retained Unified Logging as evidence insufficient for activation. For this one installation, prior hook verification was accepted for the unchanged live PID. **That PID-specific temporary exception must not be reused or published as a general verification mechanism.**
 - The passive monitor already distinguishes `STATIC_OK_RUNTIME_UNCONFIRMED` from an actual static failure when historical log records are unavailable; the same distinction should be reflected in any future installer. A portable, persistent, process-bound attestation design has **not** yet been implemented.
 
-**Reproducibility boundary:** The public repository's checked-in v6 source still targets `25G241` via its build gate. The validated `25G332` binary and privileged deployment code are not included. The observations above must not be interpreted as saying the currently published source can simply be built and deployed on `25G332`.
+**Reproducibility boundary:** The checked-in Objective-C source matches the sources used by the local validated `25G332` candidate (both source SHA-256 values match). This proposed branch updates the local build script to compile the exact running build gate for either `25G241` or `25G332`. The resulting repository-built artifact has not yet been independently installed and verified on a clean machine, and the privileged deployment code is not included. This is reproducible **compilation support**, not a turnkey public installer.
 
 ## Not tested or not established
 
 - SIP-enabled operation of the experimental v6 library: **not supported**.
 - Tahoe on an OpenCore Legacy Patcher Mac: **not tested**. Earlier Sequoia observations only demonstrated the missing-occurrence symptom, not patch compatibility.
 - Apple Silicon: **not tested** and intentionally rejected by the build configuration.
-- Builds other than `25G241` and the separately validated `25G332` candidate: **not tested**. The **checked-in** source still gates itself to `25G241`; no automatic cross-build compatibility is implied.
+- Builds other than `25G241` and the separately validated `25G332` candidate: **not tested**. The updated build script explicitly gates compiled artifacts to the current allowlisted build; no automatic cross-build compatibility is implied.
 - Full absence of races when simultaneously installing two Objective-C method hooks: **not established**. Coordination is internal to this library, not with arbitrary runtime callers.
 - Automatic compatibility with later Apple private API changes: **not established**.
 - Direct capture of the authoritative EWS/Graph payload for the original meeting: **not performed**.
