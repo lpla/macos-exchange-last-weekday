@@ -35,4 +35,15 @@ The exact production network payload was not packet-captured. The evidence is st
 
 The module checks macOS build `25G241`, Intel architecture, the exact Objective-C method encodings, and implementation origins before installing both method replacements. It is intentionally fail-closed when those assumptions do not hold.
 
+## Imported recurrence persistence and observability (Tahoe 25G332)
+
+In a separate 27 October 2026 experiment with a validated `25G332` candidate, the two runtime method replacements were confirmed within the Exchange synchronization process. Nevertheless, previously misinterpreted occurrences only became visible after the Exchange account was disabled and re-enabled, causing a fresh import. This is consistent with an **already persisted incorrect EventKit recurrence** that the runtime conversion hook cannot retroactively rewrite. No direct EventKit database modification was attempted.
+
+Following a reboot, a fresh process loaded the candidate and the fallback worker installed both hooks (`actual_source=3`); the passive monitoring job was also registered. The post-reboot hook logs were observed directly, but a separate post-reboot visual calendar check was not recorded.
+
+A logging pitfall was observed during monitor activation: `os_log_info` records previously visible for a live process were later unavailable even though its PID had not changed and the recurrence had been functionally verified. Therefore, the absence of retained installation logs must be treated as **unconfirmed**, not as a proof that hooks were removed. The local installer had also rejected a protected journal file because its unprivileged check could not traverse a root-owned `0700` directory. Both issues are in deployment verification, not the recurrence conversion itself.
+
+These deployment scripts and binaries are **not published**. The Objective-C source matches the `25G332` validated candidate sources byte-for-byte. On this proposed branch, `tools/build.sh` provides an explicit compile-time gate for `25G241` and `25G332`, but there is still no publicly vetted installation mechanism. Future builds remain rejected.
+
+
 `src/Autoload.m` attempts installation in the constructor, after relevant `dlopen` returns, and via a fallback worker. This improves late class-registration handling but does not guarantee no callback runs before the hooks are installed.
