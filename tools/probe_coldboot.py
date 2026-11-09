@@ -155,7 +155,6 @@ def child(mode):
 def main():
     if sys.platform != 'darwin' or platform.machine() != 'x86_64':
         raise SystemExit('This probe requires macOS Intel x86_64')
-    import subprocess
     build = subprocess.check_output(
         ['/usr/bin/sw_vers', '-buildVersion'], text=True).strip()
     experimental = os.environ.get('EXS_V6_EXPERIMENTAL_25G342') == '1'
