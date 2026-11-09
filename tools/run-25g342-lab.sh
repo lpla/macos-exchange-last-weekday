@@ -26,7 +26,7 @@ print -- "If the 5-to-5 bug is no longer present, STOP and review; no patch is n
 /usr/bin/env python3 tools/isolated_eventkit_probe.py
 
 print -- "PHASE 3: build experimental artifacts restricted to the running build"
-./tools/build.sh --experimental-25G342
+/bin/zsh tools/build.sh --experimental-25G342
 
 print -- "PHASE 4: three fresh isolated subprocesses (normal, transient, mismatch)"
 EXS_V6_EXPERIMENTAL_25G342=1 /usr/bin/env python3 tools/probe_coldboot.py
