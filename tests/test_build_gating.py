@@ -25,6 +25,22 @@ class BuildGateTests(unittest.TestCase):
         self.assertIn('strcmp(buf, EXS_EXPECTED_BUILD) == 0', SOURCE)
         self.assertIn('if (!checkBuild()) return -5;', SOURCE)
 
+    def test_unvalidated_candidate_requires_explicit_opt_in(self):
+        self.assertIn("25G342)", BUILD)
+        self.assertIn('"$1" == "--experimental-25G342"', BUILD)
+        self.assertIn('out_dir="build/experimental-25G342"', BUILD)
+        self.assertIn("EXPERIMENTAL ONLY", BUILD)
+        self.assertIn("do not install", BUILD)
+
+    def test_lab_does_not_modify_system_services(self):
+        lab = (ROOT / "tools" / "run-25g342-lab.sh").read_text()
+        self.assertIn('25G342', lab)
+        self.assertIn("isolated_eventkit_probe.py", lab)
+        self.assertIn("probe_coldboot.py", lab)
+        self.assertIn("EXS_V6_EXPERIMENTAL_25G342=1", lab)
+        self.assertNotIn("sudo ", lab)
+        self.assertNotIn("launchctl ", lab)
+
     def test_fault_injection_and_mismatch_separate(self):
         self.assertIn('X-TEST-MISMATCH', BUILD)
         self.assertIn('EXS_LAB_TRANSIENT_FAIL_COUNT=8', BUILD)
