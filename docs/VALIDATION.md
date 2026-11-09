@@ -24,6 +24,12 @@
 
 **Reproducibility boundary:** The checked-in Objective-C source matches the sources used by the local validated `25G332` candidate (both source SHA-256 values match). This proposed branch updates the local build script to compile the exact running build gate for either `25G241` or `25G332`. The resulting repository-built artifact has not yet been independently installed and verified on a clean machine, and the privileged deployment code is not included. This is reproducible **compilation support**, not a turnkey public installer.
 
+## Tahoe 26.7.3 investigation (build 25G342)
+
+A separate experimental code branch has been prepared for `25G342`, with an exact-build opt-in compiler gate and a non-privileged, isolated test driver. **No test results from a Mac actually running 25G342 have been obtained yet.** No live injection, account reimport, installation persistence, or rollback has been validated for this build.
+
+The experiment first checks whether Apple's unmodified recurrence conversion still misinterprets ordinal 5. Only if the bug remains should the exact-build Objective-C candidate be compiled and probed in isolated processes. Source-level similarity and passing static tests are not sufficient to approve deployment.
+
 ## Not tested or not established
 
 - SIP-enabled operation of the experimental v6 library: **not supported**.
