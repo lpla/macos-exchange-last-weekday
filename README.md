@@ -51,6 +51,18 @@ On an Intel Mac running either validated build (`25G241` or `25G332`), with Xcod
 
 The build script rejects every unapproved build and non-Intel machine. It creates three ad-hoc-signed dylibs under the ignored `build/` directory. Only `libExchangeLastWeekdayFix.v6.dylib` targets the running build; the other two are deliberately mismatched or fault-injected. **Never inject or deploy the test variants.** No system state is changed by the build command itself.
 
+## Experimental compatibility lab for Tahoe 26.7.3
+
+The public release of Tahoe 26.7.3 is reported as build `25G342`. It is **not yet validated** for the v6 patch. On an Intel Mac running that exact installed build, this experimental branch provides a local, unprivileged compatibility workflow:
+
+```zsh
+zsh tools/run-25g342-lab.sh
+```
+
+The script checks the running build and CPU, runs static tests, probes the **unmodified** Apple private converter with synthetic data, builds a distinctly labelled candidate in `build/experimental-25G342`, and exercises normal, delayed-initialization and intentionally incompatible candidates in fresh **isolated Python processes**. This procedure does **not** register a LaunchAgent, alter the Exchange daemon, modify calendars, change SIP, or install anything.
+
+A successful lab is **not approval for live deployment**. Do not reuse installers built for 25G332; they are machine-specific and intentionally excluded from this repository. First review the isolated results and confirm that Apple's original defect remains present and the ABI is unchanged. New privileged installation and rollback procedures require separate auditing and validation.
+
 ## Workaround and warnings
 
 Until Apple corrects the behavior, check the authoritative Exchange recurrence in Outlook on the web. Avoid editing affected series from macOS Calendar. The optional ICS generator produces separate static placeholders for missing dates; these require manual updates after any rescheduling, cancellation, or exception. Importing placeholders into iCloud may sync them to other devices and cause duplicates.
