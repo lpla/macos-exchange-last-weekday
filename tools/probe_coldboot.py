@@ -16,7 +16,11 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 PLUGIN = ('/System/Library/PrivateFrameworks/ExchangeSync.framework/Versions/A/'
           'DataConsumers/EventKitDataConsumer.dataconsumer/Contents/MacOS/EventKitDataConsumer')
+# The experimental candidate lives outside the validated build output.
+# The flag must be carried into each fresh child subprocess.
 BUILT = ROOT / 'build'
+if os.environ.get('EXS_V6_EXPERIMENTAL_25G342') == '1':
+    BUILT = BUILT / 'experimental-25G342'
 
 
 def objc_api(objc, name, restype, *args):
@@ -121,7 +125,7 @@ def child(mode):
         'worker_started': val('worker_started'),
         'worker_finished': val('worker_finished')}, flush=True)
     if mode in ('normal', 'transient'):
-        assert val('build_compatible') == 1, 'OS build gate did not match 25G241'
+        assert val('build_compatible') == 1, 'OS build gate does not match the running build'
         assert val('installed') == 1, 'Hooks did not install after plugin became ready'
         assert val('seen_plugin_dlopen') >= 1, 'The dlopen interposer did not see the plugin'
         if mode == 'normal':
@@ -151,6 +155,15 @@ def child(mode):
 def main():
     if sys.platform != 'darwin' or platform.machine() != 'x86_64':
         raise SystemExit('This probe requires macOS Intel x86_64')
+    build = subprocess.check_output(
+        ['/usr/bin/sw_vers', '-buildVersion'], text=True).strip()
+    experimental = os.environ.get('EXS_V6_EXPERIMENTAL_25G342') == '1'
+    if experimental and build != '25G342':
+        raise SystemExit('Experimental probe allowed only on exact build 25G342')
+    if build == '25G342' and not experimental:
+        raise SystemExit('Explicit EXS_V6_EXPERIMENTAL_25G342=1 required')
+    if build not in ('25G241', '25G332', '25G342'):
+        raise SystemExit(f'Unvalidated build: {build}')
     if os.environ.get('EXS_V6_TEST_CHILD'):
         child(os.environ['EXS_V6_TEST_CHILD'])
         return

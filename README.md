@@ -13,7 +13,8 @@ The core mismatch is `BYDAY=5TU` versus the expected `BYDAY=-1TU`. Apple EventKi
 - An experimental Objective-C **v6** library normalized the conversion in both directions (`5 → -1` on import, `-1 → 5` on export). On the tested Intel build, it was verified in the live Exchange daemon, after cold boots and during multiple recurring-series editing scenarios.
 - The v6 library was later **fully uninstalled**. Apple's original Exchange service was restored; it synchronized non-recurring events after reboot with **System Integrity Protection (SIP) enabled**. This is a rollback verification, **not** evidence that Apple has fixed the last-weekday bug.
 - On **27 October 2026**, an independently prepared v6 candidate was validated on the same Intel research Mac after upgrading to **macOS Tahoe 26.7.2, build `25G332`**. Both hooks were verified in the live Exchange daemon and again following a reboot. Previously missing Exchange recurrences reappeared after disabling and re-enabling the Exchange account to force reimport. The root-owned passive health monitor also registered after reboot. This is one-system experimental validation, not a general compatibility guarantee.
-- **The checked-in Objective-C source matches the validated local source byte-for-byte**, and the experimental build script on this proposed branch now explicitly selects either `25G241` or `25G332` from the running Intel macOS version. This is build support, not an installed-patch test of the repository checkout. The machine-specific privileged deployment scripts are not distributed here. See the validation notes.
+- On **10 November 2026**, the v6 candidate was validated in isolated subprocesses and then in the live Exchange service on an Intel Mac running **Tahoe 26.7.3, build `25G342`**. Both hooks were observed in process, the previously missing occurrences appeared in Apple Calendar, and the user confirmed that creating a new affected recurrence worked. A passive monitor reported `STATIC_OK`; persistence after reboot remains untested for this build.
+- The checked-in Objective-C core retains the exact-build and private-ABI guards. The build script supports `25G241`, `25G332` and `25G342` on Intel, but **the machine-specific privileged deployment and recovery scripts are not public installers**. See the validation notes.
 - No SIP-compatible automatic patch was developed. **Tahoe with OpenCore Legacy Patcher and Apple Silicon remain untested**.
 
 See [technical findings](docs/FINDINGS.md) and [validation and limitations](docs/VALIDATION.md).
@@ -21,7 +22,7 @@ See [technical findings](docs/FINDINGS.md) and [validation and limitations](docs
 ## Repository contents
 
 - `src/`: Objective-C v6 experimental conversion patch and initialization hooks.
-- `tools/build.sh`: checks the exact Intel macOS build (`25G241` or `25G332`), compiles the runtime build gate into the Objective-C candidate, and ad-hoc-signs three **local research artifacts**; **does not install them**.
+- `tools/build.sh`: accepts the three individually tested Intel macOS builds (`25G241`, `25G332`, `25G342`), embeds the exact current OS build in the runtime compatibility gate and ad-hoc-signs three **local research artifacts**; **does not install them**.
 - `tools/isolated_eventkit_probe.py`: probes the unmodified private Apple converter in a separate local process with synthetic data; does not access a calendar account.
 - `tools/probe_coldboot.py`: v6 isolated startup and bidirectional conversion tests with Apple private classes. It requires the experimental build artifacts and may crash an isolated process if Apple changes the private ABI.
 - `tools/missing_occurrences.py`: optional local `.ics` placeholder generator. **Not a sync repair**. Do not import blindly; manual placeholders can become inaccurate or duplicate genuine appointments.
@@ -43,13 +44,31 @@ The isolated probes require the appropriate **macOS Intel build** and may crash 
 
 ### Experimental build (not installation)
 
-On an Intel Mac running either validated build (`25G241` or `25G332`), with Xcode Command Line Tools:
+On an Intel Mac running a tested build (`25G241`, `25G332` or `25G342`), with Xcode Command Line Tools:
 
 ```zsh
 ./tools/build.sh
 ```
 
 The build script rejects every unapproved build and non-Intel machine. It creates three ad-hoc-signed dylibs under the ignored `build/` directory. Only `libExchangeLastWeekdayFix.v6.dylib` targets the running build; the other two are deliberately mismatched or fault-injected. **Never inject or deploy the test variants.** No system state is changed by the build command itself.
+
+## Isolated compatibility lab for Tahoe 26.7.3
+
+Tahoe 26.7.3 build `25G342` passed the isolated compatibility laboratory and subsequent live functional verification on one Intel research Mac. The repository includes the nonprivileged laboratory workflow:
+
+```zsh
+zsh tools/run-25g342-lab.sh
+```
+
+The script checks the running build and CPU, runs static tests, probes the **unmodified** Apple private converter with synthetic data, builds a distinctly labelled candidate in `build/experimental-25G342`, and exercises normal, delayed-initialization and intentionally incompatible candidates in fresh **isolated Python processes**. This procedure does **not** register a LaunchAgent, alter the Exchange daemon, modify calendars, change SIP, or install anything.
+
+Isolated success alone does not establish compatibility with future builds. Before attempting any live deployment, verify the running build and ABI and separately review privileged installation, rollback, and system service changes. Never reuse an installer from an older macOS build.
+
+### Live migration findings on Tahoe 25G342
+
+The first attended migration of the existing 25G332 installation encountered a transient `xpcproxy` launch state and deliberately fell back to the native Apple Exchange service. A machine-specific recovery continuation then activated the signed 25G342 candidate, verified both hooks in the live process and enabled the health monitor. Existing and newly created affected recurring events were subsequently confirmed in Apple Calendar.
+
+**The machine-specific migration and recovery scripts are deliberately excluded from this public repository:** they are not vetted as general-purpose installers and must not be reused on another Mac. See [validation details](docs/VALIDATION.md) for the evidence and remaining persistence limitation.
 
 ## Workaround and warnings
 
