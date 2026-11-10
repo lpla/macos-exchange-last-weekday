@@ -35,6 +35,15 @@ An Intel `x86_64` Mac running **macOS 26.7.3, exact build `25G342`**, executed `
 - **Transient-failure isolated process:** fault-injected initial result `-8`, then successful worker installation (`source=3`, `attempts=9`) with the same correct bidirectional conversions.
 - **Intentional build mismatch:** the candidate refused activation (`initial_rc=-5`, `state=-1`, `installed=0`, no worker), preserving the unmodified conversions.
 
+### Live migration and recovery on Tahoe 25G342 (10 November 2026)
+
+- Before the migration, the 25G332 dylib was still mapped in the custom ExchangeSync service after the OS update. The old passive monitor correctly reported `INCOMPATIBLE_PLATFORM`.
+- The guarded migration preflight verified both pinned SHA-256 digests, previous journal `WATCH_ENABLED`, expected launchd overrides and custom agent topology. **All 13 portable tests passed**.
+- During initial migration the replacement service was temporarily reported by `ps` as `xpcproxy io.lpla.exchange-last-weekday-sync`. The migration's immediate executable assertion falsely rejected that transitional state. Its recovery procedure reported `NATIVE_RESTORED`, confirming the native Apple service had restarted.
+- A separately supplied, state-specific continuation (`resume_25g342.py`) confirmed the journal `RESTORED_NATIVE`, the new on-disk dylib digest `75b240444c7f2a64eadaa7bf2a7da79663ef5b0e80049486231ae967694bf321`, the preserved agents and native topology. It allowed the transitional `xpcproxy` state to resolve before verification.
+- The resumed live deployment returned **`HOOKS_ACTIVE` in PID 63638** and **`UPGRADE_OK`**; the passive monitor was enabled, reported `Runtime hook evidence: OBSERVED_ACTIVE_RECENTLY` and `STATIC_OK` for 25G342. Both hooks were observed in the live daemon.
+- **Still pending:** confirm formerly missing recurrence occurrences in the Calendar interface after the 25G342 cutover, verify persistence following a restart, and exercise the 25G342 restoration path. The local recovery continuation and the local last-minute edits to the migration script should be reviewed before publishing them as generally reusable tooling.
+
 The laboratory reported `ISOLATED_LAB_PASSED`. These results support **isolated ABI and conversion compatibility** on build `25G342`. They do **not** establish live daemon functionality, safe installation, persistence after reboot or native-service restoration. No calendar or Exchange account was modified during the tests. This build must remain experimental pending live integration and rollback validation.
 
 ## Not tested or not established
