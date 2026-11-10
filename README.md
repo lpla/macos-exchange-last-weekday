@@ -63,6 +63,21 @@ The script checks the running build and CPU, runs static tests, probes the **unm
 
 A successful lab is **not approval for live deployment**. Do not reuse installers built for 25G332; they are machine-specific and intentionally excluded from this repository. First review the isolated results and confirm that Apple's original defect remains present and the ABI is unchanged. New privileged installation and rollback procedures require separate auditing and validation.
 
+### Controlled upgrade from an existing 25G332 installation
+
+For the **specific research installation** described in `docs/VALIDATION.md`, branch `experiment/tahoe-25g342-compatibility` also contains an unvalidated migration tool. It **requires** the installed old binary's exact SHA-256, its original protected journal in `WATCH_ENABLED`, the expected customized LaunchAgents and health checker, and the exact experimental 25G342 candidate hash. It refuses to run as root, refuses unrecognized states, and does not change SIP.
+
+The read-only preflight is:
+
+```zsh
+python3 -m unittest discover -s tests -v
+python3 tools/upgrade_25g342.py preflight
+```
+
+The separate `apply` subcommand is deliberately **not authorized for general use**. It is intended for an attended single-host experiment after reviewing preflight results and an independent audit. It backs up the old library, manifest, checker and both LaunchAgents under a new protected migration journal; stops the monitor and the old Exchange replacement job; installs the new signed library and matching health-check metadata; and demands evidence of both hooks from the new PID before enabling the watcher. On any detected cutover failure, it attempts to restore Apple's native Exchange service instead of reactivating a known incompatible 25G332 dylib. A forced termination or power failure can still require manual recovery; verify the journal and launchd state before rebooting.
+
+**This is not a turnkey or generally validated installer.** Never execute `apply` without reviewing compatibility and rollback conditions for the actual machine, and never reuse it for a different hash, user account topology or future build.
+
 ## Workaround and warnings
 
 Until Apple corrects the behavior, check the authoritative Exchange recurrence in Outlook on the web. Avoid editing affected series from macOS Calendar. The optional ICS generator produces separate static placeholders for missing dates; these require manual updates after any rescheduling, cancellation, or exception. Importing placeholders into iCloud may sync them to other devices and cause duplicates.
