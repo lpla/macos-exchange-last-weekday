@@ -18,7 +18,7 @@
 - In the initial live process, diagnostics showed `both hooks installed (actual_source=2, observer=2, result=0)` following an initially deferred constructor attempt. A separate live verification returned `HOOKS_ACTIVE`.
 - The previously missing monthly Exchange occurrences became visible in native Calendar **after the account was disabled and re-enabled**, forcing a new synchronization. Simply injecting the corrected conversion does not rewrite recurrence rules that EventKit already imported incorrectly. No changes to the meeting series were required.
 - Following a normal **reboot**, a new Exchange process mapped the same v6 dylib, and startup diagnostics reported `both hooks installed (actual_source=3, observer=3, result=0)` after 14 attempts by the fallback worker. The passive health watcher also registered. Static health verification matched build, architecture, dylib hash, code signature, service topology and expected launchd state; runtime verification returned `HOOKS_ACTIVE`.
-- The Calendar user-interface recurrence display was verified *before* the reboot. Its post-reboot display was not separately reported as part of this record, although the post-reboot hooks were directly verified.
+- The user subsequently confirmed that the previously missing Exchange occurrences **remained visible after reboot** without requiring another account reimport. The post-reboot hooks were also directly verified.
 - Two **local deployment-script** defects were found, separate from the Objective-C recurrence patch: (1) a root-owned journal under a `0700` directory was incorrectly inspected using a non-privileged file test, causing a false missing-file error; the local verification function was corrected to use privileged metadata checks. (2) the watch installer treated the absence of an `os_log_info` message in retained Unified Logging as evidence insufficient for activation. For this one installation, prior hook verification was accepted for the unchanged live PID. **That PID-specific temporary exception must not be reused or published as a general verification mechanism.**
 - The passive monitor already distinguishes `STATIC_OK_RUNTIME_UNCONFIRMED` from an actual static failure when historical log records are unavailable; the same distinction should be reflected in any future installer. A portable, persistent, process-bound attestation design has **not** yet been implemented.
 
@@ -26,16 +26,23 @@
 
 ## Tahoe 26.7.3 investigation (build 25G342)
 
-A separate experimental code branch has been prepared for `25G342`, with an exact-build opt-in compiler gate and a non-privileged, isolated test driver. **No test results from a Mac actually running 25G342 have been obtained yet.** No live injection, account reimport, installation persistence, or rollback has been validated for this build.
+An Intel `x86_64` Mac running **macOS 26.7.3, exact build `25G342`**, executed `zsh tools/run-25g342-lab.sh` on 10 November 2026. Observed results:
 
-The experiment first checks whether Apple's unmodified recurrence conversion still misinterprets ordinal 5. Only if the bug remains should the exact-build Objective-C candidate be compiled and probed in isolated processes. Source-level similarity and passing static tests are not sufficient to approve deployment.
+- Eight portable static regression tests passed.
+- Apple's **unmodified** private Exchange-to-EventKit converter still maps EXS Tuesday ordinal `5` to EventKit `weekNumber=5`, rather than the intended `-1`. The original bug therefore remains reproducible in this isolated converter.
+- The opt-in build produced three experimental x86_64 libraries in `build/experimental-25G342`; macOS code-signature verification succeeded for all three.
+- **Normal isolated process:** hook installation succeeded after relevant `dlopen` (`source=2`, `installed=1`, `last_rc=0`); the forward conversion mapped `5 → -1`, the reverse mapped `-1 → 5`, and ordinal `4` remained unchanged.
+- **Transient-failure isolated process:** fault-injected initial result `-8`, then successful worker installation (`source=3`, `attempts=9`) with the same correct bidirectional conversions.
+- **Intentional build mismatch:** the candidate refused activation (`initial_rc=-5`, `state=-1`, `installed=0`, no worker), preserving the unmodified conversions.
+
+The laboratory reported `ISOLATED_LAB_PASSED`. These results support **isolated ABI and conversion compatibility** on build `25G342`. They do **not** establish live daemon functionality, safe installation, persistence after reboot or native-service restoration. No calendar or Exchange account was modified during the tests. This build must remain experimental pending live integration and rollback validation.
 
 ## Not tested or not established
 
 - SIP-enabled operation of the experimental v6 library: **not supported**.
 - Tahoe on an OpenCore Legacy Patcher Mac: **not tested**. Earlier Sequoia observations only demonstrated the missing-occurrence symptom, not patch compatibility.
 - Apple Silicon: **not tested** and intentionally rejected by the build configuration.
-- Builds other than `25G241` and the separately validated `25G332` candidate: **not tested**. The updated build script explicitly gates compiled artifacts to the current allowlisted build; no automatic cross-build compatibility is implied.
+- Live deployment on builds other than `25G241` and the separately validated `25G332` candidate: **not established**. Build `25G342` passed isolated ABI and recurrence tests but has **not** been installed into the live Exchange daemon. Later builds are untested and rejected.
 - Full absence of races when simultaneously installing two Objective-C method hooks: **not established**. Coordination is internal to this library, not with arbitrary runtime callers.
 - Automatic compatibility with later Apple private API changes: **not established**.
 - Direct capture of the authoritative EWS/Graph payload for the original meeting: **not performed**.
