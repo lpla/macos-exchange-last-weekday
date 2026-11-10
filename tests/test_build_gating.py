@@ -14,7 +14,7 @@ SOURCE = (ROOT / "src" / "ExchangeLastWeekdayFix.m").read_text()
 
 class BuildGateTests(unittest.TestCase):
     def test_exact_supported_intel_builds(self):
-        self.assertIn("25G241|25G332)", BUILD)
+        self.assertIn("25G241|25G332|25G342)", BUILD)
         self.assertIn('[[ "$running_arch" == x86_64 ]]', BUILD)
         self.assertIn('case "$running_build" in', BUILD)
         self.assertIn('Unvalidated macOS build:', BUILD)
@@ -25,11 +25,10 @@ class BuildGateTests(unittest.TestCase):
         self.assertIn('strcmp(buf, EXS_EXPECTED_BUILD) == 0', SOURCE)
         self.assertIn('if (!checkBuild()) return -5;', SOURCE)
 
-    def test_unvalidated_candidate_requires_explicit_opt_in(self):
-        self.assertIn("25G342)", BUILD)
+    def test_25g342_lab_artifacts_remain_separate(self):
         self.assertIn('"$1" == "--experimental-25G342"', BUILD)
         self.assertIn('out_dir="build/experimental-25G342"', BUILD)
-        self.assertIn("EXPERIMENTAL ONLY", BUILD)
+        self.assertIn("ISOLATED LAB ARTIFACTS", BUILD)
         self.assertIn("do not install", BUILD)
 
     def test_lab_does_not_modify_system_services(self):
