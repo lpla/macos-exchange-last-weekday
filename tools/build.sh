@@ -1,6 +1,6 @@
 #!/bin/zsh
-# Build only for validated Intel releases, or an explicitly opted-in isolated
-# compatibility experiment on the exact 25G342 release build.
+# Build only for individually validated Intel macOS builds.
+# The 25G342 lab keeps optional test artifacts separate from normal builds.
 # No installation, SIP modification, daemon operations or calendar access.
 set -euo pipefail
 cd "${0:A:h}/.."
@@ -14,18 +14,16 @@ running_arch="$(/usr/bin/uname -m)"
 
 out_dir="build"
 case "$running_build" in
-  25G241|25G332)
-    (( $# == 0 )) || { print -u2 -- "No arguments accepted on a validated build."; exit 1; }
-    ;;
-  25G342)
-    [[ $# == 1 && "$1" == "--experimental-25G342" ]] || {
-      print -u2 -- "25G342 is NOT validated: use tools/run-25g342-lab.sh to test it in isolation."
+  25G241|25G332|25G342)
+    if [[ $# == 1 && "$1" == "--experimental-25G342" && "$running_build" == 25G342 ]]; then
+      out_dir="build/experimental-25G342"
+    elif (( $# != 0 )); then
+      print -u2 -- "Unsupported build option. Use --experimental-25G342 only on build 25G342."
       exit 1
-    }
-    out_dir="build/experimental-25G342"
+    fi
     ;;
   *)
-    print -u2 -- "Unvalidated macOS build: $running_build (validated: 25G241, 25G332; experimental: 25G342)."
+    print -u2 -- "Unvalidated macOS build: $running_build (supported: 25G241, 25G332, 25G342)."
     exit 1
     ;;
 esac
@@ -54,6 +52,6 @@ for f in "$out_dir/libExchangeLastWeekdayFix.v6.dylib" \
   /usr/bin/codesign --verify -v "$f"
 done
 print -- "Built three local Intel research artifacts for $running_build in $out_dir; no system modifications."
-if [[ "$running_build" == 25G342 ]]; then
-  print -- "EXPERIMENTAL ONLY: do not install or inject these artifacts into exchangesyncd."
+if [[ "$out_dir" == build/experimental-25G342 ]]; then
+  print -- "ISOLATED LAB ARTIFACTS: do not install or inject the test variants."
 fi
